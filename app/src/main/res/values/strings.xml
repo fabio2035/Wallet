@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Wallet</string>
+
+
+
+    <string name="action_disclaimer">Disclaimer</string>
+    <string name="action_signOut">Sign Out</string>
+</resources>

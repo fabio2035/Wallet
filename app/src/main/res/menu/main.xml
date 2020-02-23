@@ -1,0 +1,12 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context=".ui.ItemListActivity">
+    <item android:id="@+id/action_disclaimer"
+    android:title="@string/action_disclaimer"
+    app:showAsAction="never" />
+    <item android:id="@+id/action_signOut"
+        android:title="@string/action_signOut"
+        app:showAsAction="never" />
+</menu>

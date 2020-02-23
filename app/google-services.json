@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "507492088833",
+    "firebase_url": "https://wallet-5fd20.firebaseio.com",
+    "project_id": "wallet-5fd20",
+    "storage_bucket": "wallet-5fd20.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:507492088833:android:92df3d00c5e87f0c0dd400",
+        "android_client_info": {
+          "package_name": "com.example.wallet"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "507492088833-1dsndlchr8441ias9jp9oaohm5s819pr.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.wallet",
+            "certificate_hash": "f716c9ee2b8a99711f129c81e6ebf5867cefacff"
+          }
+        },
+        {
+          "client_id": "507492088833-kepdgmkg73i51ch95o0dq18gvco8ob16.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC4k_rwzTU2rdrStXFeXneOE67DBmtCtgc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "507492088833-kepdgmkg73i51ch95o0dq18gvco8ob16.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
