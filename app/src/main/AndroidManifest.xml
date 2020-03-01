@@ -11,7 +11,8 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.WRITE_SYNC_SETTINGS" />
     <uses-permission android:name="android.permission.AUTHENTICATE_ACCOUNTS" />
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
 
     <application
         android:allowBackup="true"
@@ -28,6 +29,23 @@
             </intent-filter>
         </activity>
         <activity android:name=".ui.PrivacyPolicy"></activity>
+
+        <provider
+            android:name=".data.DataProvider"
+            android:authorities="com.example.wallet"
+            android:exported="false"
+            android:syncable="true" />
+
+        <service
+            android:name=".location.LocationUpdatesIntentService"
+            android:exported="false" />
+
+        <receiver android:name=".location.LocationUpdatesBroadcastReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.example.wallet.location.LocationUpdatesBroadcastReceiver.ACTION_PROCESS_UPDATES" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>
