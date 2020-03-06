@@ -30,12 +30,6 @@
         </activity>
         <activity android:name=".ui.PrivacyPolicy"></activity>
 
-        <provider
-            android:name=".data.DataProvider"
-            android:authorities="com.example.wallet"
-            android:exported="false"
-            android:syncable="true" />
-
         <service
             android:name=".location.LocationUpdatesIntentService"
             android:exported="false" />

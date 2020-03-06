@@ -3,7 +3,6 @@ package com.example.wallet.location
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
@@ -15,14 +14,18 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.TaskStackBuilder
 import com.example.wallet.MainActivity
 import com.example.wallet.R
-import com.example.wallet.data.DataContract
 
 import java.text.DateFormat
 import java.util.*
-import android.widget.Toast
-import com.firebase.ui.auth.AuthUI.getApplicationContext
 import java.text.SimpleDateFormat
 import android.util.Log
+import androidx.room.Room
+import com.example.wallet.data.Utility
+import com.example.wallet.data.WalletRoomDatabase
+import com.example.wallet.data.dao.LocationDAO
+import com.example.wallet.data.entity.DLocation
+import java.lang.Exception
+import kotlin.math.abs
 
 /**
  * Utility methods used in this sample.
@@ -32,6 +35,18 @@ internal object LocationUtils {
     val KEY_LOCATION_UPDATES_REQUESTED = "location-updates-requested"
     val KEY_LOCATION_UPDATES_RESULT = "location-update-result"
     val CHANNEL_ID = "channel_01"
+
+    var homewrkcnt: Int = 0
+    var locationsCnt: Int = 0
+    lateinit var prevLocation: List<DLocation>
+
+    private val TAG = LocationUtils::class.java.simpleName
+
+    private lateinit var locationDAO: LocationDAO
+
+    private lateinit var db: WalletRoomDatabase
+
+    private lateinit var tempString: StringBuilder
 
     fun setRequestingLocationUpdates(context: Context, value: Boolean) {
         PreferenceManager.getDefaultSharedPreferences(context)
@@ -49,7 +64,7 @@ internal object LocationUtils {
      * Posts a notification in the notification bar when a transition is detected.
      * If the user clicks the notification, control goes to the MainActivity.
      */
-    fun sendNotification(context: Context, notificationDetails: String) {
+    fun sendNotification(context: Context, notificationDetails: String, contentTitle: String) {
         // Create an explicit content Intent that starts the main Activity.
         val notificationIntent = Intent(context, MainActivity::class.java)
 
@@ -162,80 +177,245 @@ internal object LocationUtils {
 
 
         //Location algorithm
-        locationChecks()
+        locationChecks(context, locations)
 
 
-        //Save location updates in database...
-        val cv = ContentValues()
+    }
 
-        val dateFormatter = SimpleDateFormat("yyyyMMdd")
-        val timeFormatter = SimpleDateFormat("HHmmss")
+    private fun locationChecks(
+        context: Context,
+        locations: List<Location>
+    ) {
+
+        db = Room.databaseBuilder(context, WalletRoomDatabase::class.java, "wallet.db").allowMainThreadQueries().build()
+
+
+        //prep current datetime
+        val dateFormatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+        val date = Date()
+        val dateStr = dateFormatter.format(date).toString()
+
+        val locs = db.LocationDAO().getLocations()
+            Log.i(TAG, "There are ${locs.count()} ")
+
+            locs.forEach() {
+                Log.i(TAG, it.toString())
+            }
+            tempString = java.lang.StringBuilder()
+            //Check if there is any previous locations
+            if (db.LocationDAO().getLocations().count() > 0) {
+                prevLocation = db.LocationDAO().getPrevLoc()
+
+                //check if device is at Home?
+                if (deviceIsHome(locations)) {
+                    //YES -> don't notify
+                } else {
+                    //NO - Device is in new location -> notify
+                    when (checkLocDuration(dateStr, locations)) {
+                        3 -> updateLocation(Utility.STATUS_HOME) //device has been in area long enough to be considered home or work place
+                        2 -> {
+                            updateLocation(Utility.STATUS_NOTIFIED)
+                            sendNotification(context, "Did you make any purchase while in this location?", "Hello")
+                             }//device is in new location - notify
+                        1 -> {//notification already sent, do nothing
+                             }
+                        0 -> {
+                            insertLocation(Utility.STATUS_NOTIFIED, locations, dateStr)
+                            sendNotification(context, "Did you make any purchases recently?", "Hello")
+                             }
+                    }
+                }
+            } else {
+                //Insert new location
+                insertLocation(Utility.STATUS_LOCVER, locations, dateStr)
+                sendNotification(context, "Hi. I'll be watching you from now on...", "Hello")
+            }
+
+        //close db
+        if(db.isOpen){ db.close()}
+
+        writeToScreen(tempString, context)
+
+    }
+
+    private fun updateLocation(status: String) {
+        //update location with status
+        Log.i(TAG, "updating location with id: " + prevLocation[0].id + " , status: " + status)
+        try{
+            tempString.append("Updating location with: $status").append("\n")
+        db.LocationDAO().updateHomewrk(prevLocation[0].id, status)}catch (exc: Exception){
+            Log.e(TAG, "Error trying to update record: " + exc.message)
+        }
+    }
+
+
+    private fun insertLocation(
+        status: String,
+        locations: List<Location>,
+        dateStr: String
+    ) {
+        try{
+            tempString.append(dateStr).append("\n")
+            tempString.append("inserting Lat: " + locations[0].latitude.toString() + " ; lng: " + locations[0].longitude.toString()).append("\n")
+        Log.i(TAG, "inserting Lat: " + locations[0].latitude.toString() + " ; lng: " + locations[0].longitude.toString())
+        val lat = locations[0].latitude.toString()
+        val lng = locations[0].longitude.toString()
+
+        db.LocationDAO().insert(DLocation(0,
+            dateStr,
+            lat,
+            lng,
+            status))}
+        catch (exc: Exception){
+            Log.e(TAG, "An error occured trying to insert data: " + exc.message)
+        }
+
+    }
+
+
+    private fun checkLocDuration(
+        dateStr: String,
+        locations: List<Location>
+    ): Int {
+        //Integer to return
+        var IntReturn = 0
+
+        Log.i(TAG, "checking duration between crnt time and prev time")
+        //check duration of current time compared to prev location time
         val date = Date()
 
-        //System.out.println(formatter.format(date))
+        //check if there are any previous locations
+        if(prevLocation.count()>0){
 
-        val dateStr = String.format(
-            Locale.US,
-            "%08d",
-            Integer.parseInt(dateFormatter.format(date).toString())
-        )
+            //Is device within area of previous location?
+            if(checkRadius(locations)){
+                //check how long device has been in this area
+                val dfr = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+                val prevTime : Date = dfr.parse(prevLocation.get(0).date)
+                val crntTime : Date = dfr.parse(dateStr)
 
-        val timeStr =
-            String.format(Locale.US, "%04d", Integer.parseInt(timeFormatter.format(date).toString()));
+                val diff : Long = crntTime.time - prevTime.time
+                Log.i(TAG, "diff: $diff")
+                //difference in minutes
+                val diffMin = abs(diff / (60*1000))
+                Log.i(TAG, "duration is: $diffMin")
+                tempString.append(dateStr).append("\n")
+                tempString.append("Duration is $diffMin compared to previous location").append("\n")
 
-        cv.put(DataContract.LocationEntry.COLUMN_DATE, dateStr)
-        cv.put(DataContract.LocationEntry.COLUMN_TIME, timeStr)
-        cv.put(DataContract.LocationEntry.COLUMN_LAT, locations.get(0).latitude)
-        cv.put(DataContract.LocationEntry.COLUMN_LNG, locations.get(0).longitude)
-
-        val uri = context.getContentResolver().insert(DataContract.LocationEntry.CONTENT_URI, cv)
-
-        val execNum = DataContract.LocationEntry.getLocationFromUri(uri)
-
-        Log.d("Location", "execNum = " + execNum)
-
-        if (execNum!!.toInt() > 0) {
-            Toast.makeText(
-                context,
-                "Something was added to database!",
-                Toast.LENGTH_LONG
-            ).show()
-        }
-
-    }
-
-    private fun locationChecks() {
-
-        //check if location is within home or work classified geofence
-
-        if(checkHomeWork()){
-            //Do notihing: device is at home or at work place
-        } else{
-            //Device is in new location, or simply not at home/work:
-            //check if current location is within radius of previous location (class in 'LOCVER', 'NOTIFIED')
-            if(checkRadius()){
-                //Location is within radius of previous location register: check time difference, how long device has been in area
-                when (checkLocDuration()) {
-                    3 -> updateLocation('HOMEWRK') //device has been in area long enough to be considered home or work place
-                    2 -> updateLocation('NOTIFIED') //device has been in area long enough to be sent a notification
-                    else -> {} //Do noting: device has not been in area long enough for classification
+                IntReturn = when {
+                    diffMin >= Utility.HOMEWRK_MINPERIOD -> //consider it home or work place
+                        3
+                    diffMin >= Utility.MIN_NOTIFICATION_PERIOD && prevLocation[0].status != Utility.STATUS_NOTIFIED  -> {
+                        //send notification
+                        2
+                    }
+                    diffMin >= Utility.MIN_NOTIFICATION_PERIOD && prevLocation[0].status == Utility.STATUS_NOTIFIED  -> {
+                        //notification already sent, do nothing
+                        1}
+                    else -> 1 //do nothing
                 }
             }else{
-                //device is in new location, out of previous 'LOCVER' or 'NOTIFIED' class: insert new location
-                insertLocation('LOCVER')
+                tempString.append(dateStr).append("\n")
+                tempString.append("It's new location setting LOCVER").append("\n")
+                //It's a new area register it..
+                IntReturn = 0
             }
+        }else{
+            tempString.append(dateStr).append("\n")
+            tempString.append("It's new location setting LOCVER").append("\n")
+            //there are no previous locations
+            IntReturn = 0
         }
 
-
+        return IntReturn
     }
 
-    private fun checkHomeWork(): Boolean {
-    //check whether device is at home/work or in new location
+    private fun checkRadius(locations: List<Location>): Boolean {
 
+        var prevLoc = Location("prevlocation")
+        prevLoc.latitude = prevLocation[0].lat.toDouble()
+        prevLoc.longitude = prevLocation[0].lng.toDouble()
+
+
+        var crntLocation = Location("crntLocation")
+        crntLocation.latitude = locations[0].latitude
+        crntLocation.longitude = locations[0].longitude
+
+        val distance = crntLocation.distanceTo(prevLoc)
+
+        Log.i(TAG, "distance is $distance")
+
+        tempString.append("distance is $distance").append("\n")
+
+        //if we find a previously known home/workplace location
+        return distance <= Utility.MINIMUM_DISTANCE
     }
+
+
+    private fun deviceIsHome(locations: List<Location>): Boolean {
+
+        var returnVal = false
+        var index = 0
+
+        Log.i(TAG, "checking if device is at home or workplace...")
+        var wrkLoc = db.LocationDAO().getHomewrk()
+        if(wrkLoc.count()>0) {
+            //if there are any previously marked home/workplace
+            //compare current location with previously saved home/work location
+            do {
+                Log.i(
+                    TAG,
+                    "previous home lat: " + wrkLoc[index].lat + "; Long: " + wrkLoc[index].lng + "; date: " + wrkLoc[index].date + "; status: " + wrkLoc[index].status
+                )
+                var prevLoc = Location("prevlocation")
+                prevLoc.latitude = wrkLoc[index].lat.toDouble()
+                prevLoc.longitude = wrkLoc[index].lng.toDouble()
+
+
+                var crntLocation = Location("crntLocation")
+                crntLocation.latitude = locations[0].latitude
+                crntLocation.longitude = locations[0].longitude
+
+                Log.i(
+                    TAG,
+                    "current location lat: " + locations[0].latitude + " ;long: " + locations[0].longitude
+                )
+
+                val distance = crntLocation.distanceTo(prevLoc)
+
+                //if we find a previously known home/workplace location
+                if(distance <= Utility.MINIMUM_DISTANCE) {
+                    returnVal =true
+                    Log.i(TAG, "current location is at $distance from previously known home location")
+                    tempString.append("Location is @ $distance from previous home location").append("\n")
+
+                }
+                index++
+            } while(index <= wrkLoc.count() && !returnVal)
+
+
+        }else{
+            Log.i(TAG, "can't compare current location to home yet")
+            tempString.append("Location is not close to home").append("\n")
+            returnVal = false
+        }
+
+        return returnVal
+    }
+
+    private fun writeToScreen(text: StringBuilder, context: Context){
+        PreferenceManager.getDefaultSharedPreferences(context)
+            .edit()
+            .putString(
+                KEY_LOCATION_UPDATES_RESULT, text.toString()
+            )
+            .apply()
+    }
+
 
     fun getLocationUpdatesResult(context: Context): String? {
         return PreferenceManager.getDefaultSharedPreferences(context)
             .getString(KEY_LOCATION_UPDATES_RESULT, "")
     }
+
 }

@@ -31,10 +31,11 @@ class LocationUpdatesBroadcastReceiver : BroadcastReceiver() {
                 if (result != null) {
                     val locations = result.locations
                     LocationUtils.setLocationUpdatesResult(context, locations)
-                    LocationUtils.sendNotification(
+                    /*LocationUtils.sendNotification(
                         context,
-                        LocationUtils.getLocationResultTitle(context, locations)
-                    )
+                        LocationUtils.getLocationResultTitle(context, locations),
+                        "Location Update"
+                    )*/
                     Log.i(TAG, LocationUtils.getLocationUpdatesResult(context))
                 }
             }

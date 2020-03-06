@@ -84,7 +84,7 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
      * The max time before batched results are delivered by location services. Results may be
      * delivered sooner than this interval.
      */
-    private val MAX_WAIT_TIME = UPDATE_INTERVAL * 5 // Every 5 minutes.
+    private val MAX_WAIT_TIME = UPDATE_INTERVAL * 1 // Every 5 minutes.
     private val REQUEST_PERMISSIONS_REQUEST_CODE = 34
 
 
@@ -246,7 +246,6 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
             e.printStackTrace()
             Log.d(TAG, "Error processing location updates")
         }
-
     }
 
     private fun getPendingIntent(): PendingIntent {

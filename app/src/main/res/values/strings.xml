@@ -9,7 +9,6 @@
 
     <string name="action_disclaimer">Disclaimer</string>
     <string name="action_signOut">Sign Out</string>
-    <string name="googlePlacesAPI">AIzaSyCFhZEkWITkxMyHaa_7U1axN9WbOeKmDf0</string>
 
     <string name="pref_stats_year_status" translatable="false">stat_year</string>
 

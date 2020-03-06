@@ -1,39 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <dimen name="fab_margin">16dp</dimen>
-    <dimen name="app_bar_height">200dp</dimen>
-    <dimen name="item_width">200dp</dimen>
-    <dimen name="text_margin">16dp</dimen>
-    <dimen name="appbar_elevation">4dp</dimen>
 
     <!-- Default screen margins, per the Android Design guidelines. -->
     <dimen name="activity_horizontal_margin">16dp</dimen>
     <dimen name="activity_vertical_margin">16dp</dimen>
-    <dimen name="detail_bottom_padding">16dp</dimen>
-    <dimen name="detail_horizontal_padding">16dp</dimen>
 
-
-    <dimen name="detail_vertical_margin">8dp</dimen>
 
     <!-- Closely grouped elements -->
-    <dimen name="element_top_margin">5dp</dimen>
-    <dimen name="element_bottom_margin">5dp</dimen>
-    <dimen name="widget_margin">8dp</dimen>
-    <dimen name="menu_icon_height">45dp</dimen>
-    <dimen name="menu_icon_width">45dp</dimen>
 
     <!-- For pager adaptation -->
-    <dimen name="loose_margin">55dp</dimen>
 
     <!-- FAB button settings -->
-    <dimen name="fab_elevation">6dp</dimen>
 
-
-    <dimen name="month_label_dimen">120dp</dimen>
 
     <!-- Per the design guidelines, navigation drawers should be between 240dp and 320dp:
          https://developer.android.com/design/patterns/navigation-drawer.html -->
-    <dimen name="navigation_drawer_width">240dp</dimen>
 
     <dimen name="default_margin">20dp</dimen>
 

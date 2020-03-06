@@ -6,6 +6,12 @@ import android.content.Context
 import android.content.Intent
 import android.location.Location
 import android.util.Log
+import androidx.lifecycle.ViewModelProvider
+import androidx.room.Room
+import androidx.room.Room.databaseBuilder
+import com.example.wallet.data.WalletRoomDatabase
+import com.example.wallet.data.dao.LocationDAO
+import com.example.wallet.viewmodel.LocationViewModel
 
 import com.google.android.gms.location.LocationResult
 
@@ -25,6 +31,7 @@ import com.google.android.gms.location.LocationResult
  */
 class LocationUpdatesIntentService : IntentService(TAG) {
 
+
     override fun onHandleIntent(intent: Intent?) {
         if (intent != null) {
             val action = intent.action
@@ -33,7 +40,7 @@ class LocationUpdatesIntentService : IntentService(TAG) {
                 if (result != null) {
                     val locations = result.locations
                     LocationUtils.setLocationUpdatesResult(this, locations)
-                    LocationUtils.sendNotification(this, LocationUtils.getLocationResultTitle(this, locations))
+                    //LocationUtils.sendNotification(this, LocationUtils.getLocationResultTitle(this, locations), "Location update")
                     Log.i(TAG, LocationUtils.getLocationUpdatesResult(this))
                 }
             }
